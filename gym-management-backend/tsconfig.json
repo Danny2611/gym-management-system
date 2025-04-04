@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "strict": true, // Bật chế độ strict
+    "noImplicitAny": false, // Tắt kiểm tra implicit any
+    "skipLibCheck": true, // Bỏ qua kiểm tra thư viện
+    "paths": {
+      "": ["src/"]
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": ["./node_modules/@types", "./types"]
+  },
+  "include": ["src/**/*", "types/**/*"],
+  "ts-node": {
+      "files": true
+    }
+  
+}
