@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { packageService } from "~/services/packageService";
 import { useNavigate } from "react-router-dom";
-import { Link } from 'react-router-dom';
-interface Package {
-  _id: string;
-  name: string;
-  max_members?: number;
-  price: number;
-  duration?: number;
-  description?: string;
-  benefits: string[];
-  status: 'active' | 'inactive';
-  category?: 'basic' | 'premium' | 'specialized' | 'standard' | 'vip';
-  popular?: boolean;
-}
+import { Link } from "react-router-dom";
+import { Package } from "~/types/package";
 
 interface FilterButtonProps {
   children: React.ReactNode;
@@ -56,8 +45,6 @@ interface PackageCardProps {
 }
 
 const PackageCard: React.FC<PackageCardProps> = ({ pack }) => (
-  
-  
   <div className="flex flex-col overflow-hidden rounded-lg border border-gray-200 transition-shadow hover:shadow-lg dark:border-gray-700">
     <div className="bg-blue-600 p-4 text-white">
       <h3 className="text-xl font-bold">{pack.name}</h3>
@@ -89,28 +76,20 @@ const PackageCard: React.FC<PackageCardProps> = ({ pack }) => (
 
       <div className="mt-6">
         <button className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700">
-        <Link 
-            to={`/user/packages-register/${pack._id}`} 
-          >
-          Đăng ký gói tập ngay
-        </Link>
-       
+          <Link to={`/user/packages-register/${pack._id}`}>
+            Đăng ký gói tập ngay
+          </Link>
         </button>
         <button className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
-        <Link 
-            to={`/user/package-detail/${pack._id}`} 
-          >
-          Xem chi tiết
-        </Link>
+          <Link to={`/user/package-detail/${pack._id}`}>Xem chi tiết</Link>
         </button>
-        
       </div>
     </div>
   </div>
 );
 
 const PackagesPage = () => {
-  const [filter, setFilter] = useState<Package['category'] | 'all'>('all');
+  const [filter, setFilter] = useState<Package["category"] | "all">("all");
   const [packages, setPackages] = useState<Package[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,45 +121,44 @@ const PackagesPage = () => {
     const fetchPackages = async () => {
       try {
         setIsLoading(true);
-        const response = await packageService.getAllPackages({ status: 'active' });
+        const response = await packageService.getAllPackages({
+          status: "active",
+        });
         // console.log("Response from API:", response);
-  
+
         // Kiểm tra cấu trúc response thực tế
         if (response) {
           // Nếu response trực tiếp là mảng packages
           if (Array.isArray(response)) {
             setPackages(response);
-          } 
+          }
           // Nếu response có thuộc tính data
           else if (response.data && Array.isArray(response.data)) {
             setPackages(response.data);
-          } 
+          }
           // Nếu response có thuộc tính success và data
           else if (response.success && response.data) {
             setPackages(response.data);
-          } 
-          else {
-            setError('Invalid response format');
+          } else {
+            setError("Invalid response format");
           }
         } else {
-          setError('No packages found');
+          setError("No packages found");
         }
       } catch (err) {
-        setError('An error occurred while fetching packages');
+        setError("An error occurred while fetching packages");
         console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
-  
+
     fetchPackages();
   }, []);
 
   // Lọc gói tập theo category
   const filteredPackages =
-    filter === "all" 
-      ? packages 
-      : packages.filter((p) => p.category === filter);
+    filter === "all" ? packages : packages.filter((p) => p.category === filter);
 
   // Render loading state
   if (isLoading) {
@@ -196,8 +174,8 @@ const PackagesPage = () => {
     return (
       <div className="container mx-auto px-4 py-8 text-center text-red-600">
         <p>{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="mt-4 rounded-lg bg-blue-600 px-6 py-2 text-white"
         >
           Thử lại
@@ -260,10 +238,10 @@ const PackagesPage = () => {
           Gói cao cấp
         </FilterButton>
         <FilterButton
-          isActive={filter === "specialized"}
-          onClick={() => setFilter("specialized")}
+          isActive={filter === "fitness"}
+          onClick={() => setFilter("fitness")}
         >
-          Gói chuyên biệt
+          Gói Fitness
         </FilterButton>
       </div>
 

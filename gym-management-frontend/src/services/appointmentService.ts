@@ -1,7 +1,7 @@
 // services/appoinmentService.ts
+import { Schedule } from "~/types/schedule";
 import { apiClient } from "./api";
 import { Appointment } from "~/types/appointment";
-import { Trainer } from "~/types/trainer";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -23,105 +23,254 @@ export interface CreateAppointmentParams {
 }
 
 export interface AppointmentFilter {
-  status?: 'confirmed' | 'pending' | 'cancelled';
+  status?: "confirmed" | "pending" | "cancelled";
   startDate?: string;
   endDate?: string;
 }
 
+export interface MemberScheduleFilters {
+  status?: string; 
+  startDate?: string;
+  endDate?: string;
+  trainerId?: string;
+  timeSlot?: string;
+}
+
+export interface AppointmentListFilter {
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  searchTerm?: string;
+}
+
+
+
+
+export interface AppointmentItem {
+  id: string;
+  date: string;
+  time: string;
+  location: string;
+  notes: string;
+  status: "confirmed" | "pending" | "cancelled" | "completed" | "missed";
+  trainer: {
+    id: string;
+    name: string;
+    image: string;
+    specialization: string;
+  };
+  package_name?: string;
+}
+
+// Interface cho thông tin đổi lịch
+export interface RescheduleAppointmentParams {
+  appointmentId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  notes?: string;
+}
 export const appointmentService = {
   /**
    * Tạo lịch hẹn mới với PT
    * @param appointmentData - Thông tin lịch hẹn cần tạo
    * @returns Thông tin lịch hẹn đã tạo
    */
-  createAppointment: async (appointmentData: CreateAppointmentParams): Promise<ApiResponse<Appointment>> => {
+  createAppointment: async (
+    appointmentData: CreateAppointmentParams,
+  ): Promise<ApiResponse<Appointment>> => {
     try {
-      const response = await apiClient.post("/api/user/appointments", appointmentData);
+      const response = await apiClient.post(
+        "/api/user/appointments",
+        appointmentData,
+      );
       return response.data;
     } catch (error) {
       return {
         success: false,
-        message: 'Không thể tạo lịch hẹn',
-        errors: [error]
+        message: "Không thể tạo lịch hẹn",
+        errors: [error],
       };
     }
   },
 
-  /**
-   * Lấy danh sách lịch hẹn của hội viên
-   * @param filters - Bộ lọc để tìm kiếm lịch hẹn
-   * @returns Danh sách lịch hẹn
-   */
-  getMemberAppointments: async (filters?: AppointmentFilter): Promise<ApiResponse<Appointment[]>> => {
+  // Lấy danh sách lịch hẹn đã xác nhận
+  getMemberSchedule: async (
+    filters: MemberScheduleFilters = {},
+  ): Promise<ApiResponse<Schedule[]>> => {
     try {
-      // Xây dựng query parameters nếu có bộ lọc
-      let queryString = '';
-      if (filters) {
-        const params = new URLSearchParams();
-        if (filters.status) params.append('status', filters.status);
-        if (filters.startDate) params.append('startDate', filters.startDate);
-        if (filters.endDate) params.append('endDate', filters.endDate);
-        queryString = params.toString() ? `?${params.toString()}` : '';
+      // Tạo query params từ filters
+      const params = new URLSearchParams();
+
+      if (filters.status) {
+        params.append("status", filters.status);
       }
 
-      const response = await apiClient.get(`/api/user/appointments${queryString}`);
-      return response.data;
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Không thể tải danh sách lịch hẹn',
-        errors: [error]
-      };
-    }
-  },
+      if (filters.startDate) {
+        params.append("startDate", filters.startDate);
+      }
 
-  /**
-   * Hủy lịch hẹn
-   * @param appointmentId - ID của lịch hẹn cần hủy
-   * @returns Thông tin lịch hẹn đã hủy
-   */
-  cancelAppointment: async (appointmentId: string): Promise<ApiResponse<Appointment>> => {
-    try {
-      const response = await apiClient.delete(`/api/user/appointments/${appointmentId}`);
-      return response.data;
-    } catch (error) {
-      return {
-        success: false,
-        message: 'Không thể hủy lịch hẹn',
-        errors: [error]
-      };
-    }
-  },
+      if (filters.endDate) {
+        params.append("endDate", filters.endDate);
+      }
 
-  /**
-   * Kiểm tra lịch trống của huấn luyện viên
-   * @param trainer_id - ID của huấn luyện viên
-   * @param date - Ngày cần kiểm tra
-   * @param startTime - Thời gian bắt đầu
-   * @param endTime - Thời gian kết thúc
-   * @returns Thông tin lịch trống
-   */
-  checkTrainerAvailability: async (
-    trainer_id: string,
-    date: string,
-    startTime: string,
-    endTime: string
-  ): Promise<ApiResponse<boolean>> => {
-    try {
-      const response = await apiClient.post("/api/user/appointments/check-availability", {
-        trainer_id,
-        date,
-        startTime,
-        endTime
-      });
+      if (filters.trainerId) {
+        params.append("trainerId", filters.trainerId);
+      }
+
+      if (filters.timeSlot) {
+        params.append("timeSlot", filters.timeSlot);
+      }
+
+      const response = await apiClient.get(
+        `/api/user/my-schedule?${params.toString()}`,
+      );
       return response.data;
     } catch (error) {
       return {
         success: false,
-        message: 'Không thể kiểm tra lịch trống',
+        message: "Không thể lấy lịch tập",
         errors: [error],
-        isAvailable: false
       };
     }
-  }
+  },
+
+  getAllMemberAppointments: async (
+    filters: AppointmentListFilter = {},
+  ): Promise<ApiResponse<AppointmentItem[]>> => {
+    try {
+      // Build query params from filters
+      const params = new URLSearchParams();
+
+      if (filters.status && filters.status !== "all") {
+        params.append("status", filters.status);
+      }
+
+      if (filters.startDate) {
+        params.append("startDate", filters.startDate);
+      }
+
+      if (filters.endDate) {
+        params.append("endDate", filters.endDate);
+      }
+
+      if (filters.searchTerm) {
+        params.append("searchTerm", filters.searchTerm);
+      }
+
+      const response = await apiClient.get(
+        `/api/user/appointments?${params.toString()}`,
+      );
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: "Không thể lấy danh sách lịch hẹn",
+        errors: [error],
+      };
+    }
+  },
+
+  cancelAppointment: async (
+    appointmentId: string,
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.delete(
+        `/api/user/${appointmentId}/cancel`,
+      );
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: "Không thể hủy lịch hẹn",
+        errors: [error],
+      };
+    }
+  },
+
+  completeAppointment: async (
+    appointmentId: string,
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.put(
+        `/api/user/${appointmentId}/complete`,
+      );
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: "Không thể đánh dấu hoàn thành lịch hẹn",
+        errors: [error],
+      };
+    }
+  },
+
+  getAppointmentById: async (
+    appointmentId: string,
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.get(
+        `/api/user/appointments/${appointmentId}`,
+      );
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: "Không thể lấy thông tin lịch hẹn",
+        errors: [error],
+      };
+    }
+  },
+
+  rescheduleAppointment: async (
+    rescheduleData: RescheduleAppointmentParams,
+  ): Promise<ApiResponse<any>> => {
+    try {
+      const { appointmentId, ...updateData } = rescheduleData;
+      const response = await apiClient.put(
+        `/api/user/${appointmentId}/reschedule`,
+        updateData,
+      );
+      return response.data;
+    } catch (error) {
+      return {
+        success: false,
+        message: "Không thể đổi lịch hẹn",
+        errors: [error],
+      };
+    }
+  },
+
+  // /**
+  //  * Kiểm tra lịch trống của huấn luyện viên
+  //  * @param trainer_id - ID của huấn luyện viên
+  //  * @param date - Ngày cần kiểm tra
+  //  * @param startTime - Thời gian bắt đầu
+  //  * @param endTime - Thời gian kết thúc
+  //  * @returns Thông tin lịch trống
+  //  */
+  // checkTrainerAvailability: async (
+  //   trainer_id: string,
+  //   date: string,
+  //   startTime: string,
+  //   endTime: string
+  // ): Promise<ApiResponse<boolean>> => {
+  //   try {
+  //     const response = await apiClient.post("/api/user/appointments/check-availability", {
+  //       trainer_id,
+  //       date,
+  //       startTime,
+  //       endTime
+  //     });
+  //     return response.data;
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: 'Không thể kiểm tra lịch trống',
+  //       errors: [error],
+  //       isAvailable: false
+  //     };
+  //   }
+  // }
 };

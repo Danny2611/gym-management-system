@@ -56,24 +56,20 @@ const navItems: NavItem[] = [
   {
     icon: <FiCalendar className="h-5 w-5" />,
     name: "Lịch tập",
-    subItems: [
-      { name: "Lịch tập của tôi", path: "/user/my-schedule" },
-      { name: "Quản lí lịch tập", path: "/user/manage-schedule" },
-    ],
+    subItems: [{ name: "Lịch tập của tôi", path: "/user/my-schedule" }],
   },
   {
     icon: <FiClock className="h-5 w-5" />,
     name: "Lịch hẹn PT",
     subItems: [
       { name: "Danh sách PT", path: "/user/list-trainer" },
-      { name: "Đặt lịch hẹn", path: "/user/booking-appointment" },
-      { name: "Lịch hẹn của tôi", path: "/user/my-appointments" },
+      { name: "Quản lí lịch hẹn", path: "/user/manage-appointment" },
     ],
   },
   {
     icon: <FiCreditCard className="h-5 w-5" />,
     name: "Giao dịch",
-    path: "/transactions",
+    path: "/user/transactions",
   },
   {
     icon: <FiActivity className="h-5 w-5" />,

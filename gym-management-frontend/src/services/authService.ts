@@ -149,11 +149,11 @@ export const authService = {
     }
   },
 
-  // loginWithGoogle: () => {
-  //   saveCurrentLocation(); // Lưu URL hiện tại
-  //   const callbackUrl = `${getAppBaseUrl()}/oauth/callback`;
-  //   window.location.href = `${apiClient.defaults.baseURL}/api/auth/google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-  // },
+  loginWithGoogle: () => {
+    saveCurrentLocation(); // Lưu URL hiện tại
+    const callbackUrl = `${getAppBaseUrl()}/oauth/callback`;
+    window.location.href = `${apiClient.defaults.baseURL}/api/auth/google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  },
 
   loginWithFacebook: () => {
     saveCurrentLocation(); // Lưu URL hiện tại
@@ -169,20 +169,20 @@ export const authService = {
     currentPassword: string,
   ): Promise<{ message: string }> => {
     try {
-      const response = await apiClient.post("/api/auth/validate-current-password", {
-        currentPassword,
-      });
+      const response = await apiClient.post(
+        "/api/auth/validate-current-password",
+        {
+          currentPassword,
+        },
+      );
       return response.data;
     } catch (error: any) {
       if (error.response) {
-        throw new Error(error.response.data.message || "Xác thực mật khẩu thất bại");
+        throw new Error(
+          error.response.data.message || "Xác thực mật khẩu thất bại",
+        );
       }
       throw new Error("Đã xảy ra lỗi. Vui lòng thử lại sau");
     }
   },
-  
-
-  
 };
-
-

@@ -43,11 +43,17 @@ export default function ChangePassword() {
       newErrors.newPassword = "Mật khẩu mới không được để trống";
     } else {
       // Check password complexity
-      if ((!/\d/.test(formData.newPassword)) || (!/[A-Z]/.test(formData.newPassword)) || (formData.newPassword.length < 8)) {
-        newErrors.newPassword = "Mật khẩu phải chứa ít nhất 1 số và 1 chữ in hoa và có độ dài ít nhất 8 ký tự";
+      if (
+        !/\d/.test(formData.newPassword) ||
+        !/[A-Z]/.test(formData.newPassword) ||
+        formData.newPassword.length < 8
+      ) {
+        newErrors.newPassword =
+          "Mật khẩu phải chứa ít nhất 1 số và 1 chữ in hoa và có độ dài ít nhất 8 ký tự";
       }
       if (formData.newPassword === formData.currentPassword) {
-        newErrors.newPassword = "Mật khẩu mới không được trùng với mật khẩu hiện tại";
+        newErrors.newPassword =
+          "Mật khẩu mới không được trùng với mật khẩu hiện tại";
       }
     }
 
@@ -95,7 +101,7 @@ export default function ChangePassword() {
       // If validation passes, proceed with changing password
       const response = await authService.changePassword(
         formData.currentPassword,
-        formData.newPassword
+        formData.newPassword,
       );
 
       // Show success toast
@@ -107,16 +113,16 @@ export default function ChangePassword() {
         newPassword: "",
         confirmPassword: "",
       });
-      
+
       // Clear any previous errors
       setErrors({});
     } catch (error: any) {
       // Handle error from backend
       if (error.message.includes("mật khẩu hiện tại không đúng")) {
         // Specifically handle incorrect current password
-        setErrors(prev => ({
+        setErrors((prev) => ({
           ...prev,
-          currentPassword: "Mật khẩu hiện tại không đúng"
+          currentPassword: "Mật khẩu hiện tại không đúng",
         }));
         toast.error("Mật khẩu hiện tại không đúng. Vui lòng thử lại.");
       } else {

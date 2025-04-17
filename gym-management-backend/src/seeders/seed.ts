@@ -29,8 +29,8 @@ const seedAll = async () => {
     // await seedAppointments(); 
     // await seedFAQs();
     // await seedNotifications();
-    await seedPackages();
-    // await seedPackageDetails();
+    // await seedPackages();
+    await seedPackageDetails();
     // await seedPayments();
     // await seedPromotions();
     // await seedTrainers();

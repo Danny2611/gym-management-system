@@ -1,27 +1,18 @@
 // # API liên quan đến gói tập
 // src/services/packageService.ts
 import { apiClient } from "./api";
-
-interface Package {
-  _id: string;
-  name: string;
-  max_members?: number;
-  price: number;
-  duration?: number;
-  description?: string;
-  benefits: string[];
-  status: 'active' | 'inactive';
-  category?: 'basic' | 'premium' | 'specialized' | 'standard' | 'vip';
-  popular?: boolean;
-}
+import { Package } from "~/types/package";
 
 interface PackageDetail {
   _id: string;
-  package_id: string ;
+  package_id: string;
   schedule: string[];
   training_areas: string[];
   additional_services: string[];
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
 }
 
 interface PackageWithDetails extends Package {
@@ -42,8 +33,8 @@ export const packageService = {
    * Example: { category: 'premium', status: 'active' }
    */
   getAllPackages: async (params?: {
-    category?: Package['category'];
-    status?: Package['status'];
+    category?: Package["category"];
+    status?: Package["status"];
     popular?: boolean;
   }): Promise<ApiResponse<Package[]>> => {
     try {
@@ -52,8 +43,8 @@ export const packageService = {
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to fetch packages',
-        errors: [error]
+        message: "Failed to fetch packages",
+        errors: [error],
       };
     }
   },
@@ -62,41 +53,44 @@ export const packageService = {
    * Lấy chi tiết gói tập theo ID (public)
    * @param packageId - ID của gói tập
    */
-  getPackageById: async (packageId: string): Promise<ApiResponse<PackageWithDetails>> => {
+  getPackageById: async (
+    packageId: string,
+  ): Promise<ApiResponse<PackageWithDetails>> => {
     try {
       const response = await apiClient.get(`/api/public/packages/${packageId}`);
       // console.log("Raw API Response:", response); // Debug log
-  
+
       // Bọc lại dữ liệu theo đúng format ApiResponse
       return {
         success: true,
-        data: response.data
+        data: response.data,
       };
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to fetch package details',
-        errors: [error]
+        message: "Failed to fetch package details",
+        errors: [error],
       };
     }
   },
-  
 
   /**
    * Lấy các gói tập nổi bật (public)
    * @param limit - Số lượng gói trả về (mặc định: 4)
    */
-  getFeaturedPackages: async (limit: number = 4): Promise<ApiResponse<Package[]>> => {
+  getFeaturedPackages: async (
+    limit: number = 4,
+  ): Promise<ApiResponse<Package[]>> => {
     try {
       const response = await apiClient.get(`/api/public/packages/featured`, {
-        params: { limit }
+        params: { limit },
       });
       return response.data;
     } catch (error) {
       return {
         success: false,
-        message: 'Failed to fetch featured packages',
-        errors: [error]
+        message: "Failed to fetch featured packages",
+        errors: [error],
       };
     }
   },
@@ -107,20 +101,23 @@ export const packageService = {
    * @param excludeCurrentId - ID gói cần loại trừ (optional)
    */
   getPackagesByCategory: async (
-    category: Package['category'],
-    excludeCurrentId?: string
+    category: Package["category"],
+    excludeCurrentId?: string,
   ): Promise<ApiResponse<Package[]>> => {
     try {
-      const response = await apiClient.get(`/api/public/packages/category/${category}`, {
-        params: { exclude: excludeCurrentId }
-      });
+      const response = await apiClient.get(
+        `/api/public/packages/category/${category}`,
+        {
+          params: { exclude: excludeCurrentId },
+        },
+      );
       return response.data;
     } catch (error) {
       return {
         success: false,
         message: `Failed to fetch ${category} packages`,
-        errors: [error]
+        errors: [error],
       };
     }
-  }
+  },
 };

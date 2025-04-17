@@ -41,7 +41,7 @@ class MoMoPaymentService {
       accessKey: process.env.MOMO_ACCESS_KEY || '',
       secretKey: process.env.MOMO_SECRET_KEY || '',
       redirectUrl: process.env.MOMO_REDIRECT_URL || 'http://localhost:5000/api/user/payment/momo/callback',
-      ipnUrl: process.env.MOMO_IPN_URL || ' https://6076-118-71-217-155.ngrok-free.app/api/user/momo/ipn',
+      ipnUrl: process.env.MOMO_IPN_URL || 'https://687b-42-119-58-144.ngrok-free.app/api/user/momo/ipn',
       requestType: 'payWithMethod'
     };
 

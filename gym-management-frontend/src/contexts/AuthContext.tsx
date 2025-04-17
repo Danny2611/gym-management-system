@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{
 
           // Fetch current user data
           const response = await authService.getCurrentUser();
-         
+
           setUser(response.data); // Assuming your API returns user data in response.data
           setIsAuthenticated(true);
         }

@@ -102,13 +102,6 @@ export const createMoMoPayment = asyncHandler(async (req: AuthRequest, res: Resp
     });
     await payment.save();
 
-    // Tính toán thời gian bắt đầu và kết thúc membership dựa vào thông tin gói
-    // const startDate = new Date();
-    // const endDate = new Date();
-    // endDate.setDate(endDate.getDate() + packageInfo.duration);
-     
-
-
     const membership = new Membership({
       member_id: memberId,
       package_id: packageId,

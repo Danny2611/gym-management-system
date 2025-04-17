@@ -13,7 +13,7 @@ import {
 import {getMemberships, getMembershipById, pauseMembership, resumeMembership, getMembershipsActive} from '../../controllers/user/membershipController'
 import { memberUpdateValidationRules } from '../../utils/validators/memberValidator';
 import {  registerPackage } from '../../controllers/user/packageController';
-import { createAppointment, getMemberAppointments, cancelAppointment, checkTrainerAvailability } from '../../controllers/user/appointmentController';
+import { createAppointment, getAllMemberAppointments, cancelAppointment, checkTrainerAvailability, getMemberSchedule, rescheduleAppointment,getAppointmentById, completeAppointment } from '../../controllers/user/appointmentController';
 
 const router = express.Router();
 
@@ -42,8 +42,12 @@ router.patch('/my-package/resume', resumeMembership);
 
 // Route lịch hẹn
 router.post('/appointments', createAppointment); // Tạo lịch hẹn
-router.get('/appointments', getMemberAppointments); // Lấy danh sách lịch hẹn của hội viên
-router.delete('/appointments/:appointmentId', cancelAppointment); // Hủy lịch hẹn
+router.get('/my-schedule', getMemberSchedule);// Lấy danh sách lịch hẹn đã xác nhận của hội viên
+router.get('/appointments', getAllMemberAppointments); // Lấy danh sách lịch hẹn của hội viên
+router.get('/appointments/:appointmentId', getAppointmentById); // Lấy danh sách lịch hẹn của hội viên
+router.delete('/:appointmentId/cancel', cancelAppointment); // Hủy lịch hẹn
+router.put('/:appointmentId/complete', completeAppointment);
+router.put('/:appointmentId/reschedule', rescheduleAppointment); // Đổi lịch hẹn
 router.post('/appointments/check-availability', checkTrainerAvailability); // Kiểm tra lịch trống của huấn luyện viên
 
 

@@ -15,7 +15,7 @@ interface MemberProfile {
   _id: string;
   name: string;
   email: string;
-  password:string;
+  password: string;
   gender?: string;
   phone?: string;
   dateOfBirth?: string;
@@ -32,7 +32,7 @@ interface ApiResponse<T> {
   message?: string;
   data?: T;
   errors?: any[];
-  _id : string;
+  _id: string;
 }
 
 export const memberService = {

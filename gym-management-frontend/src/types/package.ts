@@ -1,5 +1,10 @@
-export type PackageStatus = 'active' | 'inactive';
-export type PackageCategory = 'basic' | 'premium' | 'specialized' | 'standard' | 'vip';
+export type PackageStatus = "active" | "inactive";
+export type PackageCategory =
+  | "basic"
+  | "premium"
+  | "fitness"
+  | "pslatinum"
+  | "vip";
 
 export interface Package {
   _id?: string; // thường sẽ có khi lấy từ DB
@@ -15,6 +20,6 @@ export interface Package {
   updated_at: string;
   category?: PackageCategory;
   popular?: boolean;
-  training_sessions?: number;
-  session_duration?: number;
+  training_sessions: number;
+  session_duration: number;
 }

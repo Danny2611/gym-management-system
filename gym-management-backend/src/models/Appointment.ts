@@ -11,7 +11,7 @@ export interface IAppointment extends Document {
     end: string;    // HH:MM format
   };
   location?: string;
-  status: 'confirmed' | 'pending' | 'cancelled';
+  status: 'confirmed' | 'pending' | 'cancelled' | 'completed' | 'missed';
   created_at: Date;
   updated_at: Date;
 }
@@ -27,7 +27,7 @@ const appointmentSchema: Schema = new Schema({
     end: { type: String, required: true }    // HH:MM format
   },
   location: String,
-  status: { type: String, enum: ['confirmed', 'pending', 'cancelled'], default: 'pending' },
+  status: { type: String, enum: ['confirmed', 'pending', 'cancelled', 'completed', 'missed'], default: 'pending' },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 });

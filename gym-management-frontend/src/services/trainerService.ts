@@ -14,8 +14,8 @@ export const trainerService = {
     } catch (error) {
       return {
         success: false,
-        message: 'Không thể lấy danh sách huấn luyện viên',
-        errors: [error]
+        message: "Không thể lấy danh sách huấn luyện viên",
+        errors: [error],
       };
     }
   },
@@ -31,8 +31,8 @@ export const trainerService = {
     } catch (error) {
       return {
         success: false,
-        message: 'Không thể lấy thông tin huấn luyện viên',
-        errors: [error]
+        message: "Không thể lấy thông tin huấn luyện viên",
+        errors: [error],
       };
     }
   },
@@ -41,17 +41,19 @@ export const trainerService = {
    * Lấy danh sách huấn luyện viên theo chuyên môn
    * @param specialization - Chuyên môn của huấn luyện viên
    */
-  getTrainersBySpecialization: async (specialization: string): Promise<ApiResponse<Trainer[]>> => {
+  getTrainersBySpecialization: async (
+    specialization: string,
+  ): Promise<ApiResponse<Trainer[]>> => {
     try {
       const response = await apiClient.get("/api/public/trainers", {
-        params: { specialization }
+        params: { specialization },
       });
       return response.data;
     } catch (error) {
       return {
         success: false,
-        message: 'Không thể lấy danh sách huấn luyện viên theo chuyên môn',
-        errors: [error]
+        message: "Không thể lấy danh sách huấn luyện viên theo chuyên môn",
+        errors: [error],
       };
     }
   },
@@ -60,16 +62,20 @@ export const trainerService = {
    * Kiểm tra lịch làm việc của huấn luyện viên
    * @param trainerId - ID của huấn luyện viên
    */
-  getTrainerSchedule: async (trainerId: string): Promise<ApiResponse<Trainer['schedule']>> => {
+  getTrainerSchedule: async (
+    trainerId: string,
+  ): Promise<ApiResponse<Trainer["schedule"]>> => {
     try {
-      const response = await apiClient.get(`/api/public/trainers/${trainerId}/schedule`);
+      const response = await apiClient.get(
+        `/api/public/trainers/${trainerId}/schedule`,
+      );
       return response.data;
     } catch (error) {
       return {
         success: false,
-        message: 'Không thể lấy lịch làm việc của huấn luyện viên',
-        errors: [error]
+        message: "Không thể lấy lịch làm việc của huấn luyện viên",
+        errors: [error],
       };
     }
-  }
+  },
 };

@@ -1,6 +1,6 @@
 export interface IWorkingHours {
   start: string; // Định dạng "HH:MM"
-  end: string;   // Định dạng "HH:MM"
+  end: string; // Định dạng "HH:MM"
 }
 
 export interface ISchedule {
@@ -23,10 +23,10 @@ export interface Trainer {
   updated_at: string;
 }
 
-// Interface hỗ trợ cho API response
-export interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data?: T;
-  errors?: any[];
+
+// Định nghĩa kiểu dữ liệu cho props của TrainerCard
+export interface TrainerCardProps {
+  trainer: Trainer;
+  onBookTrainer: () => void;
+  isBooking: boolean;
 }

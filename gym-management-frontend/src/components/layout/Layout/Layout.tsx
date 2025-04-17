@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 import Header from "../Header";
 import Footer from "../Footer";
 import { ScrollToTop } from "../../common/ScrollToTop";
-import { Toaster } from 'sonner';
+import { Toaster } from "sonner";
 interface LayoutProps {
   children?: React.ReactNode; // Cho phép children không bắt buộc
   transparentHeader?: boolean;
@@ -19,7 +19,6 @@ const Layout: React.FC<LayoutProps> = ({
       <Header />
       <main className="flex-grow">
         {children || <Outlet />} {/* Nếu không có children, render <Outlet> */}
-        
       </main>
       <Footer />
     </div>

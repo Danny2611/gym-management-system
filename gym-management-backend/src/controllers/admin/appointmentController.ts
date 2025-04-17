@@ -34,7 +34,7 @@ interface AuthRequest extends Request {
       if (req.query.startDate) filters.startDate = req.query.startDate;
       if (req.query.endDate) filters.endDate = req.query.endDate;
   
-      const appointments = await appointmentService.getMemberAppointments(
+      const appointments = await appointmentService.getAllMemberAppointments(
         new Types.ObjectId(memberId),
         filters
       );
@@ -54,57 +54,7 @@ interface AuthRequest extends Request {
   };
   
 
-/**
- * Lấy danh sách lịch hẹn của huấn luyện viên
- */
-export const getTrainerAppointments = async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      const userId = req.userId;
-      const userRole = req.userRole;
-  
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          message: 'Bạn cần đăng nhập để thực hiện chức năng này'
-        });
-        return;
-      }
-  
-      // Chỉ cho phép trainer hoặc admin xem
-      if (userRole !== 'trainer' && userRole !== 'admin') {
-        res.status(403).json({
-          success: false,
-          message: 'Bạn không có quyền truy cập chức năng này'
-        });
-        return;
-      }
-  
-      const trainerId = userRole === 'trainer' ? userId : req.params.trainerId;
-  
-      // Tạo bộ lọc từ query parameters
-      const filters: any = {};
-      if (req.query.status) filters.status = req.query.status;
-      if (req.query.date) filters.date = req.query.date;
-  
-      const appointments = await appointmentService.getTrainerAppointments(
-        new Types.ObjectId(trainerId),
-        filters
-      );
-  
-      res.status(200).json({
-        success: true,
-        count: appointments.length,
-        data: appointments
-      });
-    } catch (error) {
-      console.error('Lỗi khi lấy danh sách lịch hẹn của huấn luyện viên:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Lỗi server khi xử lý yêu cầu'
-      });
-    }
-  };
-  
+
   /**
    * Hủy lịch hẹn
    */
@@ -209,10 +159,7 @@ export const checkTrainerAvailability = async (req: AuthRequest, res: Response):
 
 
 export default {
- 
   getMemberAppointments,
-  getTrainerAppointments,
   cancelAppointment,
   checkTrainerAvailability,
-  
 };

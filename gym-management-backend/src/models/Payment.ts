@@ -1,5 +1,7 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
 
+//Thông Tin Test Thẻ ATM:
+//  1	NGUYEN VAN A	9704 0000 0000 0018	03/07	OTP	Thành công
 
 
 // Interface cho Payment

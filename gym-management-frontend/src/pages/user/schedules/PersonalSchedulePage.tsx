@@ -1,100 +1,52 @@
 import React, { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import {
   format,
   startOfWeek,
   startOfMonth,
   endOfMonth,
   addDays,
-  addMonths,
   isSameDay,
   isSameMonth,
-  parseISO,
 } from "date-fns";
 import { vi } from "date-fns/locale";
-import { FiChevronDown } from "react-icons/fi";
+import { FiChevronDown, FiLoader } from "react-icons/fi";
+import {   appointmentService, MemberScheduleFilters } from "~/services/appointmentService";
+import { trainerService } from '~/services/trainerService';
+import { Trainer } from "~/types/trainer";
+import { toast } from "react-toastify";
 
-// Define interface for member's schedule
-interface MemberSchedule {
-  id: number;
-  date: string; // "YYYY-MM-DD"
-  time: string; // "HH:MM"
-  location: string;
-  notes: string;
-  package_name: string;
-  trainer_name: string | null;
-  trainer_id: number | null;
-  trainer_image: string | null;
-  status: "upcoming" | "completed" | "missed";
-}
+// Import các component đã có
+import { CalendarNavigation,  } from "~/components/user/appointments/FilterButton";
+import { ScheduleCard } from "~/components/user/appointments/ScheduleCard";
+import { EmptyStateCard } from "~/components/user/appointments/EmptyStateCard";
+import { Schedule } from "~/types/schedule";
 
-// Define interface for trainers
-interface Trainer {
-  id: number;
-  name: string;
-  image: string | null;
-  specialty: string;
-}
 
-interface FilterButtonProps {
-  children: React.ReactNode;
-  isActive: boolean;
-  onClick: () => void;
-}
-
-const FilterButton: React.FC<FilterButtonProps> = ({
-  children,
-  isActive,
-  onClick,
-}) => (
-  <button
-    className={`rounded-full px-4 py-2 text-sm ${
-      isActive
-        ? "bg-blue-600 text-white"
-        : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-    }`}
-    onClick={onClick}
-  >
-    {children}
-  </button>
-);
 
 const PersonalSchedulePage: React.FC = () => {
   // Current date and selected date state
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [calendarType, setCalendarType] = useState<"week" | "month">("week");
-  const [selectedTrainer, setSelectedTrainer] = useState<number | null>(null);
+  const [selectedTrainer, setSelectedTrainer] = useState<string | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [showCalendarOptions, setShowCalendarOptions] = useState(false);
+
+  // API related states
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Filter dropdown states
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const [showTrainerFilter, setShowTrainerFilter] = useState(false);
   const [showTimeSlotFilter, setShowTimeSlotFilter] = useState(false);
-
-  // Mock trainers data
-  const mockTrainers: Trainer[] = [
-    {
-      id: 1,
-      name: "Mike Williams",
-      image: "/images/trainers/mike.jpg",
-      specialty: "Strength Training",
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      image: "/images/trainers/sarah.jpg",
-      specialty: "Yoga",
-    },
-    {
-      id: 3,
-      name: "David Nguyen",
-      image: "/images/trainers/david.jpg",
-      specialty: "Cardio & HIIT",
-    },
-  ];
 
   // Time slots for filtering
   const timeSlots = [
@@ -104,80 +56,89 @@ const PersonalSchedulePage: React.FC = () => {
     "Tối (18:00-22:00)",
   ];
 
-  // Function to determine which time slot a given time belongs to
-  const getTimeSlot = (time: string): string => {
-    const hour = parseInt(time.split(":")[0]);
-
-    if (hour >= 6 && hour < 12) return "Sáng (6:00-12:00)";
-    if (hour >= 12 && hour < 15) return "Trưa (12:00-15:00)";
-    if (hour >= 15 && hour < 18) return "Chiều (15:00-18:00)";
-    if (hour >= 18 && hour < 22) return "Tối (18:00-22:00)";
-    return "Khác";
+  // Fetch schedules from API
+  const fetchSchedules = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Prepare filters
+      const filters: MemberScheduleFilters = {}; 
+      // Status filter
+      if (filter !== "all") {
+        filters.status = filter;
+      }
+      
+      // Date range for calendar view
+      if (viewMode === "calendar") {
+        if (calendarType === "week") {
+          // For week view, set start and end date of the week
+          const startDay = startOfWeek(currentDate, { weekStartsOn: 1 });
+          const endDay = addDays(startDay, 6);
+          filters.startDate = format(startDay, "yyyy-MM-dd");
+          filters.endDate = format(endDay, "yyyy-MM-dd");
+        } else {
+          // For month view, set start and end date of the month
+          const monthStart = startOfMonth(currentDate);
+          const monthEnd = endOfMonth(currentDate);
+          filters.startDate = format(monthStart, "yyyy-MM-dd");
+          filters.endDate = format(monthEnd, "yyyy-MM-dd");
+        }
+      }
+      
+      // Trainer filter
+      if (selectedTrainer) {
+        filters.trainerId = selectedTrainer;
+      }
+      
+      // Time slot filter
+      if (selectedTimeSlot) {
+        filters.timeSlot = selectedTimeSlot;
+      }
+      
+      const response = await appointmentService.getMemberSchedule(filters);
+      console.log('data:',response )
+      if (response.success && response.data) {
+        setSchedules(response.data);
+      } else {
+        setError(response.message || "Đã xảy ra lỗi khi lấy lịch tập");
+        toast.error(response.message || "Đã xảy ra lỗi khi lấy lịch tập");
+      }
+    } catch (err) {
+      setError("Đã xảy ra lỗi khi lấy lịch tập");
+      toast.error("Đã xảy ra lỗi khi lấy lịch tập");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Mock data for demo purposes
-  const mockSchedules: MemberSchedule[] = [
-    {
-      id: 1,
-      date: "2025-03-20",
-      time: "08:00",
-      location: "Phòng Tập Chính - Tầng 2",
-      notes: "Tập trung vào cardio và giảm cân. Mang theo nước uống.",
-      package_name: "Gói Premium",
-      trainer_name: "Mike Williams",
-      trainer_id: 1,
-      trainer_image: "/images/trainers/mike.jpg",
-      status: "upcoming",
-    },
-    {
-      id: 2,
-      date: "2025-03-22",
-      time: "10:30",
-      location: "Phòng Yoga - Tầng 3",
-      notes: "Buổi yoga nhẹ nhàng, mang theo thảm yoga cá nhân.",
-      package_name: "Gói Premium",
-      trainer_name: "Sarah Johnson",
-      trainer_id: 2,
-      trainer_image: "/images/trainers/sarah.jpg",
-      status: "upcoming",
-    },
-    {
-      id: 3,
-      date: "2025-03-18",
-      time: "18:00",
-      location: "Khu vực tạ tự do - Tầng 1",
-      notes: "Buổi tập đã hoàn thành. Tập trung vào cơ vai và lưng.",
-      package_name: "Gói Premium",
-      trainer_name: null,
-      trainer_id: null,
-      trainer_image: null,
-      status: "completed",
-    },
-    {
-      id: 4,
-      date: "2025-03-24",
-      time: "14:00",
-      location: "Phòng HIIT - Tầng 2",
-      notes: "Buổi tập HIIT cường độ cao. Mang theo đồ khăn và nước.",
-      package_name: "Gói Premium",
-      trainer_name: "David Nguyen",
-      trainer_id: 3,
-      trainer_image: "/images/trainers/david.jpg",
-      status: "upcoming",
-    },
-    {
-      id: 5,
-      date: "2025-03-27",
-      time: "19:30",
-      location: "Phòng Tập Chính - Tầng 2",
-      notes: "Tập trung vào các bài tập toàn thân.",
-      package_name: "Gói Premium",
-      trainer_name: "Mike Williams",
-      trainer_id: 1,
-      trainer_image: "/images/trainers/mike.jpg",
-      status: "upcoming",
-    },
-  ];
+  // Fetch trainers from API
+  const fetchTrainers = async () => {
+    try {
+      const response = await trainerService.getAllTrainers();
+      
+      if (response.success && response.data) {
+        setTrainers(response.data);
+      } else {
+        console.error("Không thể lấy danh sách huấn luyện viên");
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy danh sách huấn luyện viên:", err);
+    }
+  };
+
+  // Initial data loading
+  useEffect(() => {
+    fetchTrainers();
+    fetchSchedules();
+  }, []);
+
+ 
+
+  // Refetch when filters or dates change
+  useEffect(() => {
+    fetchSchedules();
+  }, [filter, selectedTrainer, selectedTimeSlot, currentDate, calendarType, viewMode]);
 
   // Toggle view mode and close calendar options when switching to list view
   const handleViewModeChange = (mode: "calendar" | "list") => {
@@ -221,52 +182,25 @@ const PersonalSchedulePage: React.FC = () => {
     return days;
   };
 
-  // Filter schedules based on selected date, trainer, time slot, and filter option
+  // Filter schedules based on selected date for calendar view
   const getFilteredSchedules = () => {
-    let filteredData = [...mockSchedules];
-
-    // Filter by status if needed
-    if (filter !== "all") {
-      filteredData = filteredData.filter(
-        (schedule) => schedule.status === filter,
-      );
-    }
-
-    // Filter by trainer if selected
-    if (selectedTrainer !== null) {
-      filteredData = filteredData.filter(
-        (schedule) => schedule.trainer_id === selectedTrainer,
-      );
-    }
-
-    // Filter by time slot if selected
-    if (selectedTimeSlot !== null) {
-      filteredData = filteredData.filter(
-        (schedule) => getTimeSlot(schedule.time) === selectedTimeSlot,
-      );
-    }
-
-    // If in calendar view, filter by selected date
     if (viewMode === "calendar") {
       const selectedDateStr = format(selectedDate, "yyyy-MM-dd");
-      filteredData = filteredData.filter(
-        (schedule) => schedule.date === selectedDateStr,
-      );
+      return schedules.filter((schedule) => schedule.date === selectedDateStr);
     }
-
-    return filteredData;
+    return schedules;
   };
 
   // Check if a date has schedules
   const hasSchedulesOnDate = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
-    return mockSchedules.some((schedule) => schedule.date === dateStr);
+    return schedules.some((schedule) => schedule.date === dateStr);
   };
 
   // Count schedules on a specific date
   const countSchedulesOnDate = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
-    return mockSchedules.filter((schedule) => schedule.date === dateStr).length;
+    return schedules.filter((schedule) => schedule.date === dateStr).length;
   };
 
   // Reset all filters
@@ -304,6 +238,70 @@ const PersonalSchedulePage: React.FC = () => {
   const weekDays = generateWeekDays();
   const monthDays = generateMonthDays();
   const filteredSchedules = getFilteredSchedules();
+
+  useEffect(() => {
+    if (schedules.length > 0) {
+      // Sắp xếp lịch theo thứ tự từ cũ đến mới
+      const sortedSchedules = [...schedules].sort((a, b) => 
+        new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+      
+      // Tìm lịch sắp tới gần nhất (từ hôm nay trở đi)
+      const today = new Date();
+      const firstUpcomingSchedule = sortedSchedules.find(schedule => 
+        new Date(schedule.date) >= today
+      ) || sortedSchedules[0]; // Nếu không có thì lấy lịch cũ nhất
+      
+      const firstScheduleDate = new Date(firstUpcomingSchedule.date);
+      
+      // Chỉ cập nhật selectedDate nếu khác với giá trị hiện tại
+      if (!isSameDay(selectedDate, firstScheduleDate)) {
+        setSelectedDate(firstScheduleDate);
+      }
+      
+      // Kiểm tra xem lịch có nằm trong view hiện tại không
+      const isInCurrentView = calendarType === "week" 
+        ? weekDays.some(day => isSameDay(day, firstScheduleDate))
+        : monthDays.some(day => isSameDay(day, firstScheduleDate));
+        
+      // Nếu không nằm trong view hiện tại thì điều chỉnh currentDate
+      if (!isInCurrentView && !isSameMonth(currentDate, firstScheduleDate)) {
+        setCurrentDate(firstScheduleDate);
+      }
+    }
+  }, [schedules, calendarType]);
+
+  // Mark appointment as completed
+  const markAsCompleted = async (appointmentId: string) => {
+    try {
+      setLoading(true);
+      
+      const response = await appointmentService.completeAppointment(appointmentId);
+      
+      if (response.success) {
+        toast.success("Đã đánh dấu buổi tập là hoàn thành");
+        // Refresh schedules to update the UI
+        fetchSchedules();
+      } else {
+        toast.error(response.message || "Không thể đánh dấu hoàn thành lịch hẹn");
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra khi đánh dấu hoàn thành");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
+  // Navigate to reschedule page
+  const rescheduleAppointment = (id: string) => {
+    // Sau này sẽ điều hướng đến trang đổi lịch
+    navigate(`/user/reschedule-appointment/${id}`);
+  };
+
+  const startDayOfWeek = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const endDayOfWeek = addDays(startDayOfWeek, 6);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -466,7 +464,7 @@ const PersonalSchedulePage: React.FC = () => {
                 Huấn luyện viên:{" "}
                 {selectedTrainer === null
                   ? "Tất cả"
-                  : mockTrainers.find((t) => t.id === selectedTrainer)?.name}
+                  : trainers.find((t) => t._id === selectedTrainer)?.name || "Không xác định"}
               </span>
               <FiChevronDown className="h-4 w-4" />
             </button>
@@ -485,12 +483,12 @@ const PersonalSchedulePage: React.FC = () => {
                 >
                   Tất cả
                 </button>
-                {mockTrainers.map((trainer) => (
+                {trainers.map((trainer) => (
                   <button
-                    key={trainer.id}
+                    key={trainer._id}
                     className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => {
-                      setSelectedTrainer(trainer.id);
+                      setSelectedTrainer(trainer._id);
                       setShowTrainerFilter(false);
                     }}
                   >
@@ -551,252 +549,176 @@ const PersonalSchedulePage: React.FC = () => {
         </div>
       </div>
 
-      {viewMode === "calendar" && calendarType === "week" && (
-        <div className="mb-8">
-          {/* Week navigation */}
-          <div className="mb-4 flex items-center justify-between">
-            <button
-              className="rounded-lg border border-gray-300 p-2 hover:bg-gray-100"
-              onClick={() => setCurrentDate(addDays(currentDate, -7))}
-            >
-              Tuần trước
-            </button>
-            <h2 className="text-xl font-semibold">
-              {format(weekDays[0], "dd/MM/yyyy", { locale: vi })} -{" "}
-              {format(weekDays[6], "dd/MM/yyyy", { locale: vi })}
-            </h2>
-            <button
-              className="rounded-lg border border-gray-300 p-2 hover:bg-gray-100"
-              onClick={() => setCurrentDate(addDays(currentDate, 7))}
-            >
-              Tuần sau
-            </button>
-          </div>
-
-          {/* Week day headers */}
-          <div className="mb-2 grid grid-cols-7 gap-2">
-            {weekDays.map((day) => (
-              <div
-                key={day.toString()}
-                className="py-2 text-center font-medium"
-              >
-                {format(day, "EEEE", { locale: vi })}
-              </div>
-            ))}
-          </div>
-
-          {/* Date cells */}
-          <div className="grid grid-cols-7 gap-2">
-            {weekDays.map((day) => (
-              <div
-                key={day.toString()}
-                className={`min-h-24 cursor-pointer rounded-lg border p-2 ${isSameDay(day, new Date()) ? "border-2 border-blue-500" : "border-gray-200"} ${isSameDay(day, selectedDate) ? "bg-blue-50 dark:bg-blue-900" : ""} ${hasSchedulesOnDate(day) ? "font-bold" : ""} `}
-                onClick={() => setSelectedDate(day)}
-              >
-                <div className="mb-1 text-center">{format(day, "dd")}</div>
-                {hasSchedulesOnDate(day) && (
-                  <div className="mt-1">
-                    <div className="rounded-full bg-blue-600 px-2 py-1 text-center text-xs text-white">
-                      {countSchedulesOnDate(day)} buổi tập
-                    </div>
-                    {mockSchedules
-                      .filter((s) => s.date === format(day, "yyyy-MM-dd"))
-                      .slice(0, 2)
-                      .map((s) => (
-                        <div
-                          key={s.id}
-                          className="mt-1 truncate rounded bg-gray-100 p-1 text-xs dark:bg-gray-700"
-                        >
-                          {s.time} - {s.package_name}
-                        </div>
-                      ))}
-                    {countSchedulesOnDate(day) > 2 && (
-                      <div className="mt-1 text-center text-xs text-gray-500">
-                        +{countSchedulesOnDate(day) - 2} khác
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+      {/* Loading indicator */}
+      {loading && (
+        <div className="my-8 flex items-center justify-center">
+          <FiLoader className="mr-2 animate-spin" />
+          <span>Đang tải lịch tập...</span>
         </div>
       )}
 
-      {viewMode === "calendar" && calendarType === "month" && (
-        <div className="mb-8">
-          {/* Month navigation */}
-          <div className="mb-4 flex items-center justify-between">
-            <button
-              className="rounded-lg border border-gray-300 p-2 hover:bg-gray-100"
-              onClick={() => setCurrentDate(addMonths(currentDate, -1))}
-            >
-              Tháng trước
-            </button>
-            <h2 className="text-xl font-semibold">
-              {format(currentDate, "MMMM yyyy", { locale: vi })}
-            </h2>
-            <button
-              className="rounded-lg border border-gray-300 p-2 hover:bg-gray-100"
-              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-            >
-              Tháng sau
-            </button>
-          </div>
-
-          {/* Week day headers */}
-          <div className="mb-2 grid grid-cols-7 gap-2">
-            {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day) => (
-              <div key={day} className="py-2 text-center font-medium">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Date cells */}
-          <div className="grid grid-cols-7 gap-2">
-            {monthDays.map((day) => (
-              <div
-                key={day.toString()}
-                className={`cursor-pointer rounded-lg border p-2 ${isSameMonth(day, currentDate) ? "min-h-16" : "min-h-12 bg-gray-50 dark:bg-gray-900"} ${isSameDay(day, new Date()) ? "border-2 border-blue-500" : "border-gray-200"} ${isSameDay(day, selectedDate) ? "bg-blue-50 dark:bg-blue-900" : ""} ${!isSameMonth(day, currentDate) ? "text-gray-400" : ""} ${hasSchedulesOnDate(day) ? "font-bold" : ""} `}
-                onClick={() => setSelectedDate(day)}
-              >
-                <div className="text-center">{format(day, "dd")}</div>
-                {hasSchedulesOnDate(day) && isSameMonth(day, currentDate) && (
-                  <div
-                    className="mx-auto mt-1 h-2 w-2 rounded-full bg-blue-600"
-                    title={`${countSchedulesOnDate(day)} buổi tập`}
-                  ></div>
-                )}
-              </div>
-            ))}
-          </div>
+      {/* Error message */}
+      {error && !loading && (
+        <div className="my-8 rounded-lg bg-red-100 p-4 text-red-800">
+          <p>{error}</p>
+          <button 
+            className="mt-2 text-sm font-medium text-red-800 underline"
+            onClick={fetchSchedules}
+          >
+            Thử lại
+          </button>
         </div>
       )}
 
-      {/* Schedule List */}
-      <div className="overflow-hidden rounded-lg bg-white shadow-md dark:bg-gray-800">
-        <div className="bg-blue-600 p-4 text-white">
-          <h2 className="text-xl font-bold">
-            {viewMode === "calendar"
-              ? `Lịch tập ngày ${format(selectedDate, "dd/MM/yyyy", { locale: vi })}`
-              : "Danh sách lịch tập"}
-          </h2>
-        </div>
+       {!loading && !error && (
+        <>
+          {viewMode === "calendar" && calendarType === "week" && (
+            <div className="mb-8">
+              {/* Sử dụng CalendarNavigation component */}
+              <CalendarNavigation 
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                type="week"
+                startDay={startDayOfWeek}
+                endDay={endDayOfWeek}
+              />
 
-        {filteredSchedules.length > 0 ? (
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredSchedules.map((schedule) => (
-              <div
-                key={schedule.id}
-                className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <div className="flex items-start">
+              {/* Week day headers */}
+              <div className="mb-2 grid grid-cols-7 gap-2">
+                {weekDays.map((day) => (
                   <div
-                    className={`mr-4 flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full ${
-                      schedule.status === "upcoming"
-                        ? "bg-blue-100 text-blue-600"
-                        : schedule.status === "completed"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
-                    } `}
+                    key={day.toString()}
+                    className="py-2 text-center font-medium"
                   >
-                    {schedule.trainer_image ? (
-                      <img
-                        src="/api/placeholder/64/64"
-                        alt="Huấn luyện viên"
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-2xl font-bold">
-                        {schedule.time.split(":")[0]}
-                      </div>
-                    )}
+                    {format(day, "EEEE", { locale: vi })}
                   </div>
-
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <div>
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          {schedule.date} - {schedule.time}
-                        </span>
-                        <h3 className="mt-1 text-lg font-semibold">
-                          {schedule.package_name}
-                        </h3>
-                        <p className="text-gray-700 dark:text-gray-300">
-                          {schedule.location}
-                        </p>
-                      </div>
-                      <div>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-medium ${
-                            schedule.status === "upcoming"
-                              ? "bg-blue-100 text-blue-800"
-                              : schedule.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                          } `}
-                        >
-                          {schedule.status === "upcoming"
-                            ? "Sắp tới"
-                            : schedule.status === "completed"
-                              ? "Đã hoàn thành"
-                              : "Đã lỡ"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {schedule.trainer_name && (
-                      <div className="mt-2 flex items-center">
-                        <span className="mr-1 text-sm text-gray-600 dark:text-gray-400">
-                          HLV:
-                        </span>
-                        <span className="font-medium">
-                          {schedule.trainer_name}
-                        </span>
-                      </div>
-                    )}
-
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                      {schedule.notes}
-                    </p>
-
-                    <div className="mt-3 flex gap-2">
-                      <button className="rounded border border-blue-500 px-3 py-1 text-sm text-blue-500 hover:bg-blue-50">
-                        Chi tiết
-                      </button>
-                      {schedule.status === "upcoming" && (
-                        <>
-                          <button className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600">
-                            Đánh dấu hoàn thành
-                          </button>
-                          <button className="rounded border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50">
-                            Đổi lịch
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-gray-500">
-            {viewMode === "calendar"
-              ? `Không có lịch tập nào vào ngày ${format(selectedDate, "dd/MM/yyyy", { locale: vi })}`
-              : "Không có lịch tập nào phù hợp với bộ lọc"}
-          </div>
-        )}
-      </div>
 
-      {/* Add button */}
-      <div className="mt-6 flex justify-end">
-        <button className="flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
-          <span className="mr-2">+</span>
-          <span>Đặt lịch tập mới</span>
-        </button>
-      </div>
+              {/* Date cells */}
+              <div className="grid grid-cols-7 gap-2">
+                {weekDays.map((day) => (
+                  <div
+                    key={day.toString()}
+                    className={`min-h-24 cursor-pointer rounded-lg border p-2 ${isSameDay(day, new Date()) ? "border-2 border-blue-500" : "border-gray-200"} ${isSameDay(day, selectedDate) ? "bg-blue-50 dark:bg-blue-900" : ""} ${hasSchedulesOnDate(day) ? "font-bold" : ""} `}
+                    onClick={() => setSelectedDate(day)}
+                  >
+                    <div className="mb-1 text-center">{format(day, "dd")}</div>
+                    {hasSchedulesOnDate(day) && (
+                      <div className="mt-1">
+                        <div className="rounded-full bg-blue-600 px-2 py-1 text-center text-xs text-white">
+                          {countSchedulesOnDate(day)} buổi tập
+                        </div>
+                        {schedules
+                          .filter((s) => s.date === format(day, "yyyy-MM-dd"))
+                          .slice(0, 2)
+                          .map((s) => (
+                            <div
+                              key={s.id}
+                              className="mt-1 truncate rounded bg-gray-100 p-1 text-xs dark:bg-gray-700"
+                            >
+                              {s.date} - {s.package_name}
+                            </div>
+                          ))}
+                        {countSchedulesOnDate(day) > 2 && (
+                          <div className="mt-1 text-center text-xs text-gray-500">
+                            +{countSchedulesOnDate(day) - 2} khác
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {viewMode === "calendar" && calendarType === "month" && (
+            <div className="mb-8">
+              {/* Sử dụng CalendarNavigation component */}
+              <CalendarNavigation 
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                type="month"
+              />
+
+              {/* Week day headers */}
+              <div className="mb-2 grid grid-cols-7 gap-2">
+                {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((day) => (
+                  <div key={day} className="py-2 text-center font-medium">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Date cells */}
+              <div className="grid grid-cols-7 gap-2">
+                {monthDays.map((day) => (
+                  <div
+                    key={day.toString()}
+                    className={`cursor-pointer rounded-lg border p-2 ${isSameMonth(day, currentDate) ? "min-h-16" : "min-h-12 bg-gray-50 dark:bg-gray-900"} ${isSameDay(day, new Date()) ? "border-2 border-blue-500" : "border-gray-200"} ${isSameDay(day, selectedDate) ? "bg-blue-50 dark:bg-blue-900" : ""} ${!isSameMonth(day, currentDate) ? "text-gray-400" : ""} ${hasSchedulesOnDate(day) ? "font-bold" : ""} `}
+                    onClick={() => setSelectedDate(day)}
+                  >
+                    <div className="text-center">{format(day, "dd")}</div>
+                    {hasSchedulesOnDate(day) && isSameMonth(day, currentDate) && (
+                      <div
+                        className="mx-auto mt-1 h-2 w-2 rounded-full bg-blue-600"
+                        title={`${countSchedulesOnDate(day)} buổi tập`}
+                      ></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Schedule List */}
+          <div className="overflow-hidden rounded-lg bg-white shadow-md dark:bg-gray-800">
+            <div className="bg-blue-600 p-4 text-white">
+              <h2 className="text-xl font-bold">
+                {viewMode === "calendar"
+                  ? `Lịch tập ngày ${format(selectedDate, "dd/MM/yyyy", { locale: vi })}`
+                  : "Danh sách lịch tập"}
+              </h2>
+            </div>
+
+            {filteredSchedules.length > 0 ? (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredSchedules.map((schedule) => (
+                  // Sử dụng ScheduleCard component
+                  <ScheduleCard
+                    key={schedule.id}
+                    schedule={schedule}
+                    onMarkCompleted={markAsCompleted}
+                   
+                    onReschedule={rescheduleAppointment}
+                  />
+                ))}
+              </div>
+            ) : (
+              // Sử dụng EmptyStateCard component
+              <EmptyStateCard
+                title="Không có lịch tập"
+                message={
+                  viewMode === "calendar"
+                    ? `Không có lịch tập nào vào ngày ${format(selectedDate, "dd/MM/yyyy", { locale: vi })}`
+                    : "Không có lịch tập nào phù hợp với bộ lọc"
+                }
+              />
+            )}
+          </div>
+
+          {/* Add button */}
+          <div className="mt-6 flex justify-end">
+            <button className="flex items-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+              <Link to={`/user/list-trainer`}>
+                <span className="mr-2">+</span>
+                <span>Đặt lịch tập mới</span>
+              </Link>
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

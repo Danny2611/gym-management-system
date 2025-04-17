@@ -18,7 +18,7 @@ interface PaymentStatusResponse {
   success: boolean;
   message?: string;
   data?: {
-    status: 'pending' | 'completed' | 'failed';
+    status: "pending" | "completed" | "failed";
     paymentMethod: string;
     amount: number;
     transactionId: string;
@@ -46,15 +46,21 @@ export const paymentService = {
    * Đăng ký gói tập
    * @param packageId - ID của gói tập
    */
-  registerPackage: async (packageId: string, userId: string): Promise<RegisterPackageResponse> => {
+  registerPackage: async (
+    packageId: string,
+    userId: string,
+  ): Promise<RegisterPackageResponse> => {
     try {
-      const response = await apiClient.post("/api/user/packages/register", { packageId, userId },);
+      const response = await apiClient.post("/api/user/packages/register", {
+        packageId,
+        userId,
+      });
       return response.data;
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Lỗi khi đăng ký gói tập',
-        errors: [error]
+        message: error.response?.data?.message || "Lỗi khi đăng ký gói tập",
+        errors: [error],
       };
     }
   },
@@ -65,13 +71,15 @@ export const paymentService = {
    */
   createMoMoPayment: async (packageId: string): Promise<PaymentResponse> => {
     try {
-      const response = await apiClient.post("/api/user/momo/create", { packageId });
+      const response = await apiClient.post("/api/user/momo/create", {
+        packageId,
+      });
       return response.data;
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Lỗi khi tạo thanh toán',
-        errors: [error]
+        message: error.response?.data?.message || "Lỗi khi tạo thanh toán",
+        errors: [error],
       };
     }
   },
@@ -80,15 +88,21 @@ export const paymentService = {
    * Kiểm tra trạng thái thanh toán
    * @param paymentId - ID của thanh toán
    */
-  getPaymentStatus: async (paymentId: string): Promise<PaymentStatusResponse> => {
+  getPaymentStatus: async (
+    paymentId: string,
+  ): Promise<PaymentStatusResponse> => {
     try {
-      const response = await apiClient.get(`/api/user/payments/${paymentId}/status`);
+      const response = await apiClient.get(
+        `/api/user/payments/${paymentId}/status`,
+      );
       return response.data;
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Lỗi khi kiểm tra trạng thái thanh toán',
-        errors: [error]
+        message:
+          error.response?.data?.message ||
+          "Lỗi khi kiểm tra trạng thái thanh toán",
+        errors: [error],
       };
     }
   },
@@ -104,9 +118,10 @@ export const paymentService = {
     } catch (error: any) {
       return {
         success: false,
-        message: error.response?.data?.message || 'Lỗi khi lấy thông tin thanh toán',
-        errors: [error]
+        message:
+          error.response?.data?.message || "Lỗi khi lấy thông tin thanh toán",
+        errors: [error],
       };
     }
-  }
+  },
 };

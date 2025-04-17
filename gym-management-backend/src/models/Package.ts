@@ -11,7 +11,7 @@ export interface IPackage extends Document {
   created_at: Date;
   deleted_at?: Date;
   updated_at: Date;
-  category?: 'basic' | 'premium' | 'platinum' |'specialized';
+  category?: 'basic' | 'fitness' | 'premium' | 'platinum' |'vip';
   popular?: boolean;
   training_sessions?: number;
   session_duration?: number;
@@ -30,7 +30,7 @@ const packageSchema: Schema = new Schema({
   updated_at: { type: Date, default: Date.now },
   category: { 
     type: String, 
-    enum: ['basic' , 'premium' ,'platinum', 'specialized'],
+    enum: ['basic' , 'fitness', 'premium' ,'platinum', 'vip'],
     default: 'basic'
   },
   popular: { 

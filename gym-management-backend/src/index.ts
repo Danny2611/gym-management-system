@@ -107,6 +107,9 @@ import corsConfig from './config/cors';
 import './config/passport'; // Import cấu hình OAuth
 import cookieParser from 'cookie-parser'; // Đọc và xử lý cookie từ request
 
+// Import scheduled jobs
+import { initScheduledJobs } from './services/appointmentService';
+
 //middleware
 import {errorHandler} from './middlewares/errorHandler';
 
@@ -118,12 +121,17 @@ import paymentRoutes from './routes/api/paymentRoutes';
 
 
 
+
 dotenv.config(); // Load biến môi trường từ file .env
 const PORT = process.env.PORT ; // Lấy PORT từ .env, nếu không có thì dùng 5000
 
 const app = express();
 
 connectDB();
+
+// Initialize scheduled jobs after database connection
+initScheduledJobs();
+console.log('Scheduled jobs initialized');
 
 app.use(express.json());
 app.use(passport.initialize());

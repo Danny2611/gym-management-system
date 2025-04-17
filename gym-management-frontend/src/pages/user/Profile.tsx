@@ -456,35 +456,38 @@ export default function ProfilePage() {
 
                     {/* Date of Birth Field */}
                     <FormField
-  control={form.control}
-  name="dateOfBirth"
-  render={({ field }) => (
-    <FormItem className="flex flex-col gap-2">
-      <FormLabel>Ngày sinh</FormLabel>
-      {isEditing ? (
-        <DatePicker
-          selected={field.value}
-          onChange={(date) => field.onChange(date)}
-          dateFormat="dd/MM/yyyy"
-          showYearDropdown
-          scrollableYearDropdown
-          yearDropdownItemNumber={100}
-          minDate={new Date("1925-01-01")}
-          maxDate={new Date()}
-          className="w-full rounded-md border border-gray-300 p-2"
-        />
-      ) : (
-        <Input
-          value={field.value ? field.value.toLocaleDateString("vi-VN") : ""}
-          readOnly
-          className="bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white"
-        />
-      )}
-      <FormMessage />
-    </FormItem>
-  )}
-/>
-
+                      control={form.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col gap-2">
+                          <FormLabel>Ngày sinh</FormLabel>
+                          {isEditing ? (
+                            <DatePicker
+                              selected={field.value}
+                              onChange={(date) => field.onChange(date)}
+                              dateFormat="dd/MM/yyyy"
+                              showYearDropdown
+                              scrollableYearDropdown
+                              yearDropdownItemNumber={100}
+                              minDate={new Date("1925-01-01")}
+                              maxDate={new Date()}
+                              className="w-full rounded-md border border-gray-300 p-2"
+                            />
+                          ) : (
+                            <Input
+                              value={
+                                field.value
+                                  ? field.value.toLocaleDateString("vi-VN")
+                                  : ""
+                              }
+                              readOnly
+                              className="bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            />
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
 
                   {/* Address Field - Full Width */}

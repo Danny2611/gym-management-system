@@ -8,15 +8,17 @@ import {
   FiAlertCircle,
   FiRefreshCw,
 } from "react-icons/fi";
-import { membershipService,  MembershipWithRemainingData } from "../../services/membershipService";
+import {
+  membershipService,
+  MembershipWithRemainingData,
+} from "../../../services/membershipService";
 import { memberService } from "~/services/memberService";
-import { paymentService } from '~/services/paymentService';
-
+import { paymentService } from "~/services/paymentService";
 
 // Component hiển thị thanh tiến trình
 interface ProgressBarProps {
-  percent: number ;
-  remainingDays: number ;
+  percent: number;
+  remainingDays: number;
   status: string;
 }
 
@@ -82,10 +84,11 @@ const MembershipCard: React.FC<MembershipCardProps> = ({
   onPause,
   onResume,
   onViewDetails,
-  onPayment
-  
+  onPayment,
 }) => {
-  const startDate = membership.start_date ? new Date(membership.start_date) : null;
+  const startDate = membership.start_date
+    ? new Date(membership.start_date)
+    : null;
   const endDate = membership.end_date ? new Date(membership.end_date) : null;
   const paymentDate = new Date(membership.payment_id.payment_date);
   const packageInfo = membership.package_id;
@@ -133,12 +136,12 @@ const MembershipCard: React.FC<MembershipCardProps> = ({
     try {
       const userResponse = await memberService.getCurrentProfile();
       const userId = userResponse.data?._id;
-      
+
       if (!userId) {
         alert("Không thể xác định danh tính người dùng");
         return;
       }
-      
+
       onPayment(membership.package_id._id, userId);
     } catch (error) {
       console.error("Lỗi khi khởi tạo thanh toán:", error);
@@ -207,7 +210,6 @@ const MembershipCard: React.FC<MembershipCardProps> = ({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
-          
           <button
             onClick={() => onViewDetails(membership._id)}
             className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
@@ -217,7 +219,7 @@ const MembershipCard: React.FC<MembershipCardProps> = ({
 
           {membership.status === "pending" && (
             <button
-             onClick={handlePayment}
+              onClick={handlePayment}
               className="rounded-md border border-red-300 bg-red-50 px-3 py-1.5 text-xs font-medium text-yellow-700 transition-colors hover:bg-red-100 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
             >
               Thanh toán
@@ -272,12 +274,13 @@ const MembershipDetailsModal: React.FC<MembershipDetailsModalProps> = ({
   isOpen,
   onClose,
   onPause,
-  onResume
-
+  onResume,
 }) => {
   if (!isOpen || !membership) return null;
 
-  const startDate = membership.start_date ? new Date(membership.start_date) : null;
+  const startDate = membership.start_date
+    ? new Date(membership.start_date)
+    : null;
   const endDate = membership.end_date ? new Date(membership.end_date) : null;
   const paymentDate = new Date(membership.payment_id.payment_date);
   const packageInfo = membership.package_id;
@@ -334,13 +337,13 @@ const MembershipDetailsModal: React.FC<MembershipDetailsModalProps> = ({
             <div>
               <p className="text-gray-500 dark:text-gray-400">Ngày bắt đầu</p>
               <p className="font-medium text-gray-900 dark:text-white">
-              {startDate ? formatDate(startDate) : "Chưa xác định"}
+                {startDate ? formatDate(startDate) : "Chưa xác định"}
               </p>
             </div>
             <div>
               <p className="text-gray-500 dark:text-gray-400">Ngày kết thúc</p>
               <p className="font-medium text-gray-900 dark:text-white">
-              {endDate ? formatDate(endDate) : "Chưa xác định"}
+                {endDate ? formatDate(endDate) : "Chưa xác định"}
               </p>
             </div>
             <div>
@@ -391,8 +394,7 @@ const MembershipDetailsModal: React.FC<MembershipDetailsModalProps> = ({
                 Ngày thanh toán
               </p>
               <p className="font-medium text-gray-900 dark:text-white">
-                {new Date(paymentInfo.responseTime).toLocaleDateString('vi-VN')}
-
+                {new Date(paymentInfo.responseTime).toLocaleDateString("vi-VN")}
               </p>
             </div>
             <div>
@@ -435,7 +437,6 @@ const MembershipDetailsModal: React.FC<MembershipDetailsModalProps> = ({
               Tiếp tục
             </button>
           )}
-
         </div>
       </div>
     </div>
@@ -450,7 +451,9 @@ const MyPackagesPage: React.FC = () => {
   const [selectedMembership, setSelectedMembership] =
     useState<MembershipWithRemainingData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [memberships, setMemberships] = useState<MembershipWithRemainingData[]>([]);
+  const [memberships, setMemberships] = useState<MembershipWithRemainingData[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -458,13 +461,12 @@ const MyPackagesPage: React.FC = () => {
   useEffect(() => {
     const fetchMemberships = async () => {
       setLoading(true);
-      
+
       try {
         const response = await membershipService.getMemberships();
-        
+
         if (response.success && response.data) {
           setMemberships(response.data);
-
         } else {
           setError(response.message || "Không thể tải dữ liệu gói tập");
         }
@@ -482,7 +484,6 @@ const MyPackagesPage: React.FC = () => {
   // Xử lý tạm dừng gói tập
   const handlePauseMembership = async (id: string) => {
     try {
-
       const response = await membershipService.pauseMembership(id);
       if (response.success) {
         // Cập nhật danh sách gói tập sau khi tạm dừng thành công
@@ -523,9 +524,9 @@ const MyPackagesPage: React.FC = () => {
   // Xử lý mở modal chi tiết
   const handleViewDetails = async (id: string) => {
     try {
-       const userResponse = await memberService.getCurrentProfile();
+      const userResponse = await memberService.getCurrentProfile();
       const userId = userResponse.data?._id; // Kiểm tra nếu user có tồn tại
-      
+
       if (!userId) {
         alert("Không thể xác định danh tính người dùng");
         return;
@@ -548,38 +549,43 @@ const MyPackagesPage: React.FC = () => {
     try {
       // Set up processing state if needed
       const isProcessing = true;
-      
+
       // Step 1: Register for the package
-      const registerResponse = await paymentService.registerPackage(packageId, userId);
-      
+      const registerResponse = await paymentService.registerPackage(
+        packageId,
+        userId,
+      );
+
       if (!registerResponse.success) {
-        alert(registerResponse.message || 'Lỗi khi đăng ký gói tập');
+        alert(registerResponse.message || "Lỗi khi đăng ký gói tập");
         return;
       }
 
       // Step 2: Create MoMo payment request
       const paymentResponse = await paymentService.createMoMoPayment(packageId);
-      
+
       if (!paymentResponse.success || !paymentResponse.data) {
-        alert(paymentResponse.message || 'Lỗi khi tạo yêu cầu thanh toán');
+        alert(paymentResponse.message || "Lỗi khi tạo yêu cầu thanh toán");
         return;
       }
 
       // Save payment info to localStorage for later use
-      localStorage.setItem('currentPayment', JSON.stringify({
-        paymentId: paymentResponse.data.paymentId,
-        transactionId: paymentResponse.data.transactionId,
-        amount: paymentResponse.data.amount,
-        expireTime: paymentResponse.data.expireTime,
-        packageId: packageId
-      }));
+      localStorage.setItem(
+        "currentPayment",
+        JSON.stringify({
+          paymentId: paymentResponse.data.paymentId,
+          transactionId: paymentResponse.data.transactionId,
+          amount: paymentResponse.data.amount,
+          expireTime: paymentResponse.data.expireTime,
+          packageId: packageId,
+        }),
+      );
 
       // Redirect to MoMo payment page
       window.location.href = paymentResponse.data.payUrl;
-      
     } catch (err) {
-      console.error('Lỗi khi xử lý đăng ký:', err);
-      alert('Đã xảy ra lỗi không mong muốn');
+      console.error("Lỗi khi xử lý đăng ký:", err);
+      alert("Đã xảy ra lỗi không mong muốn");
     }
   };
 
@@ -742,7 +748,6 @@ const MyPackagesPage: React.FC = () => {
             onResume={handleResumeMembership}
             onViewDetails={handleViewDetails}
             onPayment={handlePayment}
-            
           />
         ))}
       </div>
